@@ -10,7 +10,7 @@ This is the agent class
 import numpy as np 
 
 class agentClass():
-
+    
     def __init__(self, agent_id, init_loc, sources, map):
 
         # checking agent_id >= 2
@@ -33,7 +33,10 @@ class agentClass():
             2: np.array([-1,0]), # left 
             3: np.array([0,-1]), # down
         }
-        self.agent_curr_location = init_loc
+        self.agent_location = [init_loc]
+        self.agent_curr_location = 0
+        # invoking initial update of the agent into the map
+        self.upd_location()
 
     def upd_health(self):
         """
@@ -53,6 +56,25 @@ class agentClass():
         else:
             self.agent_health -= 1
 
+    def upd_location(self):
+        """
+        Updating location to the physical map
+        """
+        last_index = len(self.agent_location) - 1
+        self.agent_curr_location = self.agent_location[last_index]
+
+        if len(self.agent_location) != 1:
+            prev_location = self.agent_location[last_index - 1]
+
+        y_axis = self.agent_curr_location[0]
+        x_axis = self.agent_curr_location[1]
+        
+        if len(self.agent_location) != 1:
+            self.map[y_axis][x_axis] = self.agent_id
+            self.map[prev_location[0]][prev_location[1]] = 0
+        else:
+            self.map[y_axis][x_axis] = self.agent_id
+
     def curr_location(self):
         """
         Finding the location of the agent from the map .
@@ -63,7 +85,7 @@ class agentClass():
         Things that dont have to include:
         - I do not need to assign the initial location because I can do it through the game loop. 
         """
-
+        
         # initial thoughts 
         curr_loc = np.where(map == self.agent_id)
 
@@ -82,22 +104,31 @@ class agentClass():
         - I need to add detecting forward object 
         - I need to detect 'habitat'
         """
+        last_index = len(self.agent_location) - 1
+        curr_loc = self.agent_location[last_index]
+        new_loc = []
+
         if int(direction) == 0: #right 
-            self.agent_curr_location[0] += self.action_direction[0]
-            self.agent_curr_location[1] += self.action_direction[1]
+            new_loc.append(curr_loc[0] + self.action_direction[0][0])
+            new_loc.append(curr_loc[1] + self.action_direction[0][1])
             self.upd_health()
         elif int(direction) == 1: #up 
-            self.agent_curr_location[0] += self.action_direction[0]
-            self.agent_curr_location[1] += self.action_direction[1]
+            new_loc.append(curr_loc[0] + self.action_direction[1][0])
+            new_loc.append(curr_loc[1] + self.action_direction[1][1])
             self.upd_health()
         elif int(direction) == 2: #left
-            self.agent_curr_location[0] += self.action_direction[0]
-            self.agent_curr_location[1] += self.action_direction[1]
+            new_loc.append(curr_loc[0] + self.action_direction[2][0])
+            new_loc.append(curr_loc[1] + self.action_direction[2][1])
             self.upd_health()
         elif int(direction) == 3: #down
-            self.agent_curr_location[0] += self.action_direction[0]
-            self.agent_curr_location[1] += self.action_direction[1]
+            new_loc.append(curr_loc[0] + self.action_direction[3][0])
+            new_loc.append(curr_loc[1] + self.action_direction[3][1])
             self.upd_health()
+        
+        self.agent_location.append(new_loc)
+
+        self.upd_location()
+        
 
     def detect_source(self): 
         """

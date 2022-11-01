@@ -78,5 +78,3 @@ class gridEnvs():
 
         return dict  
 
-
-newclass = gridEnvs()
