@@ -77,4 +77,16 @@ class gridEnvs():
             init_list = []
 
         return dict  
+    
+    def available_source(self):
+        
+        source_list = []
+
+        for i in range(len(self.source)):
+
+            if self.source[i]['digest'] == False:
+                source_list.append(self.source[i]['coor'])
+
+        return source_list 
+
 
