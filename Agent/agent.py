@@ -6,169 +6,100 @@ This is the agent class
 - Vision of the agent 
 
 """
+import pygame
 
-import numpy as np 
+class CreateAgent():
 
-class agentClass():
-    
-    def __init__(self, agent_id, init_loc):
+    def __init__(self, id, home_location , init_location):
 
-        # checking agent_id >= 2
-        if agent_id < 2:
-            raise SyntaxError('agent_id must be bigger or equal to 2')
+        # Identifier
+        self.Id = id
+        self.colour = (255,255,102)
+        self.size = 10
+        self.speed = 15
+        self.step = 10
 
-        """
-        agent attributes and functionality
-        """
-        self.agent_id = int(agent_id)
-        self.energy = 100
-        self.action_direction = {
-            0: np.array([1,0]), # right
-            1: np.array([0,1]), # up
-            2: np.array([-1,0]), # left 
-            3: np.array([0,-1]), # down
+        # agent location 
+        self.x_loc_home = home_location[0]
+        self.y_loc_home = home_location[1]
+        self.x_loc = init_location[0]
+        self.y_loc = init_location[1]
+        
+        # activity
+        self.activity = {
+            "eat": 1,
+            "rest": 2, 
+            "move": 3
         }
 
-        """
-        Location
-        """
-        # agent passed location stored in the list
-        self.agent_tiles = [init_loc]
-        self.agent_curr_location = init_loc
-        self.agent_habitat = init_loc
-        self.vision = []
-        # invoking initial update of the agent into the map
-        # self.upd_location()
+        # agent energy level
+        self.energy = 100
+        self.max_energy = 100 
+        self.food_eaten = 0
+        self.food_energy = 5
+        self.drainRate = 0.5
 
-    def eat_source(self):
-        """
-        This will update the health bar of the agent.
-
-        Every move of the agent cause one health and eat source add 1 health (initial)
-
-        Problem
-        - Need more context of building the environment rule in order to compute.
-        - Agent on the same grid as the health bar
-        """
-        if self.energy < 100:
-            self.energy += 1
-
-    def move_energy(self):
-
-        self.energy -= 1
-
-    def agent_move(self, direction):
-        """
-        This will allow the agent to move and update the current location as well.
-
-        Addition
-        - I need to add detecting forward object 
-        - I need to detect 'habitat'
-        """
-        last_index = len(self.agent_tiles) - 1
-        curr_loc = self.agent_tiles[last_index]
-        new_loc = []
-
-        if int(direction) == 0: #right 
-            new_loc.append(curr_loc[0] + self.action_direction[0][0])
-            new_loc.append(curr_loc[1] + self.action_direction[0][1])
-        elif int(direction) == 1: #up 
-            new_loc.append(curr_loc[0] + self.action_direction[1][0])
-            new_loc.append(curr_loc[1] + self.action_direction[1][1])
-        elif int(direction) == 2: #left
-            new_loc.append(curr_loc[0] + self.action_direction[2][0])
-            new_loc.append(curr_loc[1] + self.action_direction[2][1])
-        elif int(direction) == 3: #down
-            new_loc.append(curr_loc[0] + self.action_direction[3][0])
-            new_loc.append(curr_loc[1] + self.action_direction[3][1])
+        # state 
+        self.die = False 
         
-        self.move_energy()
-        self.agent_tiles.append(new_loc)
-        self.agent_curr_location = new_loc
-        self.get_vision()
-
-        #self.upd_location()
-
-    def get_vision(self, distance = 2):
-        """
-        Each agent will have ther own vision space. 
-
-        Setting on 2 box vision in four direction but doesn't include the diagonal box
-
-        thoughts 
-        - I have my current location
-        - Then I can use this to calculate my vision 
-        - since I have vision means that i will have to allow the agent to detect where is the food
-        """
-
-        visionTemp = []
         
-        for i in range(4):
-            loc = [self.agent_curr_location[0] ,self.agent_curr_location[1]]
-            for k in range(distance):
+    def displayAgent(self, display):
+        pygame.draw.rect(display, self.colour, [self.x_loc, self.y_loc, self.size, self.size])
 
-                loc[0] += self.action_direction[i][0]
-                loc[1] += self.action_direction[i][1]
+    def eat(self):
 
-                visionTemp.append([loc[0], loc[1]])
-        
-        self.vision = visionTemp
+        self.food_eaten += 1
 
-    
-    """
-    # Update on the physical map
-    def upd_location(self):
-        
-        last_index = len(self.agent_tiles) - 1
-        self.agent_curr_location = self.agent_tiles[last_index]
+        self.updateEnergy(activity=1)
 
-        if len(self.agent_tiles) != 1:
-            prev_location = self.agent_tiles[last_index - 1]
+    def updateEnergy(self, activity):
 
-        y_axis = self.agent_curr_location[0]
-        x_axis = self.agent_curr_location[1]
-        
-        if len(self.agent_tiles) != 1:
-            self.map[y_axis][x_axis] = self.agent_id
-            self.map[prev_location[0]][prev_location[1]] = 0
+        if self.energy <= self.max_energy:
+            if activity == self.activity["eat"]:
+                self.energy += self.food_energy
+            elif activity == self.activity["rest"]:
+                self.energy -= self.drainRate * 0.09
+            elif activity == self.activity["move"]:
+                self.energy -= self.drainRate
+            
+        if self.energy > self.max_energy:
+            self.energy == self.max_energy
+
+    def move(self, width, height, foods_dict):
+
+        keys = pygame.key.get_pressed()
+
+        if keys[pygame.K_LEFT]:
+            if self.x_loc >= self.step and self.x_loc <= width - self.step:
+                self.x_loc -= self.step 
+                self.updateEnergy(activity=3)
+                self.detectFood(foods_dict)
+        elif keys[pygame.K_RIGHT]:
+            if self.x_loc >= 0 and self.x_loc <= width - self.step * 2:
+                self.x_loc+= self.step
+                self.updateEnergy(activity=3)
+                self.detectFood(foods_dict)
+        elif keys[pygame.K_DOWN]:
+            if self.y_loc >= 0 and self.y_loc <= height - self.step * 2:
+                self.y_loc += self.step
+                self.updateEnergy(activity=3)
+                self.detectFood(foods_dict)
+        elif keys[pygame.K_UP]:
+            if self.y_loc >= self.step and self.y_loc <= height:
+                self.y_loc -= self.step
+                self.updateEnergy(activity=3)
+                self.detectFood(foods_dict)
+        elif keys[pygame.K_1]:
+            print(f"energy: {self.energy} \tfood eaten: {self.food_eaten}")
         else:
-            self.map[y_axis][x_axis] = self.agent_id
-
-    def curr_location(self):
-        Finding the location of the agent from the map .
+            self.updateEnergy(activity=2)
         
-        Problem:
-        - How do I identify which agent am I refering. 
-
-        Things that dont have to include:
-        - I do not need to assign the initial location because I can do it through the game loop. 
         
-        # initial thoughts 
-        curr_loc = np.where(map == self.agent_id)
+    def detectFood(self, foods_dict):
 
-        curr_loc_list = []
-
-        for i in curr_loc:
-            curr_loc_list.append(i)
-
-        return curr_loc_list
-
-    def on_source(self,): 
-        
-        The parameter source is the dictionary of source that contain the coordinates and the status of source 
-
-        Output: True means that the source is in the same grid as the agent. 
-        
-        # source that yet to be eaten 
-        sources_list = []
-   
-        for source in self.sources:
-            if self.sources[source]['digest'] == False:
-                sources_list.append(self.sources[source]['coor'])
-         
-        # things to consider -> detecting object infront behind and sides
-        if self.agent_curr_location in sources_list:
-            return True
-        else:
-            return False
-    """
+        for key in foods_dict.keys():
+            item = foods_dict[key]
+            if [self.x_loc, self.y_loc] == [item.x_loc, item.y_loc]:
+                self.eat()
+                item.eaten = True
+                break

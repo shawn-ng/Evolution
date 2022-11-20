@@ -1,7 +1,8 @@
 import pygame
 import random 
 import time
-
+from Agent.agent import CreateAgent as CA
+from food import Food as F
 """
 Game Logic.
 
@@ -19,11 +20,75 @@ Rules of the game
 
 pygame.init()
 
-width, height = 500, 500
-game_screen = pygame.display.set_mode((width,height))
-pygame.display.set_caption("The Evolution Game")
 
-while True:
-    pass
+class Game():
 
-pygame.quit()
+    def __init__(self, width, height, number_agent = 1 , number_food = 10):
+
+        self.dis_width = width
+        self.dis_height = height
+
+        # Creating agent
+        self.number_agent = number_agent
+        self.agents_dict = {}
+        self.populateAgent()
+
+        # Creating food 
+        self.food_count = 10
+        self.foods_dict = {}
+        self.populateFood()
+
+        # game state
+        self.game_over = False
+        self.fps = 10
+
+    def startGame(self):
+        dis = pygame.display.set_mode((self.dis_width,self.dis_height))
+        pygame.display.update()
+        pygame.display.set_caption("The Evolution Game")
+        clock = pygame.time.Clock()
+
+        while not self.game_over:
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.game_over = True
+            
+            dis.fill((0,0,0))
+
+            # check food
+            for key in self.foods_dict.keys():
+                if self.foods_dict[key].eaten == False:
+                    self.foods_dict[key].displayFood(display = dis)
+
+            self.agents_dict["agent-1"].move(width = self.dis_width, height = self.dis_height, foods_dict = self.foods_dict)
+            self.agents_dict["agent-1"].displayAgent(display = dis)   
+
+
+            pygame.display.update()
+
+            clock.tick(self.fps)
+
+    def quitGame(self):
+        pygame.quit()
+
+    def populateAgent(self):
+        
+        for i in range(self.number_agent):
+            self.agents_dict[f"agent-{i + 1}"] = CA(id=i + 1, home_location=[10 + i * 10,10 + i * 10], init_location=[10 + i * 10,10 + i * 10])
+
+    def populateFood(self):
+
+        for i in range(self.food_count):
+            foodx = round(random.randrange(20, self.dis_width - 10)/ 10) * 10 
+            foody = round(random.randrange(20, self.dis_width - 10)/ 10) * 10
+            
+            self.foods_dict[f"food-{i + 1}"] = F(id = i + 1, location = [foodx, foody]) 
+
+
+
+Game = Game(width=500, height=500, number_agent=1)
+
+Game.startGame()
+
+Game.quitGame()
