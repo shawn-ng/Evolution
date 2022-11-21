@@ -7,6 +7,7 @@ This is the agent class
 
 """
 import pygame
+import constants as const 
 
 class CreateAgent():
 
@@ -14,10 +15,10 @@ class CreateAgent():
 
         # Identifier
         self.Id = id
-        self.colour = (255,255,102)
-        self.size = 10
-        self.speed = 15
-        self.step = 10
+        self.colour = const.AGENT_COLOUR
+        self.size = const.AGENT_SIZE
+        self.speed = const.AGENT_SPEED
+        self.step = const.STEPSIZE
 
         # agent location 
         self.x_loc_home = home_location[0]
@@ -46,6 +47,9 @@ class CreateAgent():
     def displayAgent(self, display):
         pygame.draw.rect(display, self.colour, [self.x_loc, self.y_loc, self.size, self.size])
 
+    def displayHome(self,display):
+        pygame.draw.circle(display, self.colour,(self.x_loc_home + 5, self.y_loc_home + 5), radius=self.size/2)
+
     def eat(self):
 
         self.food_eaten += 1
@@ -61,7 +65,9 @@ class CreateAgent():
                 self.energy -= self.drainRate * 0.09
             elif activity == self.activity["move"]:
                 self.energy -= self.drainRate
-            
+
+        self.checkDead()
+
         if self.energy > self.max_energy:
             self.energy == self.max_energy
 
@@ -90,7 +96,8 @@ class CreateAgent():
                 self.updateEnergy(activity=3)
                 self.detectFood(foods_dict)
         elif keys[pygame.K_1]:
-            print(f"energy: {self.energy} \tfood eaten: {self.food_eaten}")
+            print(f"energy: {self.energy} \tfood eaten: {self.food_eaten} \tposition: ({self.x_loc, self.y_loc}) \tstate: {self.die}")
+            print(self.get_vision())
         else:
             self.updateEnergy(activity=2)
         
@@ -103,3 +110,42 @@ class CreateAgent():
                 self.eat()
                 item.eaten = True
                 break
+
+    def get_vision(self):
+
+        # getting vision with two tile arounds agent (each tile is 10) 5x5 tiles
+        
+        visionTemp = [[[self.x_loc, self.y_loc] for const.COLUMNS in range(5)] for const.ROWS in range(5)]
+
+        list_to_delete = []
+
+        for i in range(len(visionTemp)):
+            for j in range(len(visionTemp[i])):
+                value_x = 10 * (j - 2)
+                value_y = 10 * (i - 2)
+                visionTemp[i][j][0] +=  value_x
+                visionTemp[i][j][1] +=  value_y
+
+                if visionTemp[i][j][0] < 0 or visionTemp[i][j][0] > const.WIDTH - const.STEPSIZE or visionTemp[i][j][1] < 0 or visionTemp[i][j][1] > const.WIDTH - const.STEPSIZE:
+                    delete_coor = [i,j]
+                    list_to_delete.append(delete_coor)
+
+        for i in reversed(list_to_delete):
+            del visionTemp[i[0]][i[1]]
+
+        vision = [item for list in visionTemp for item in list]
+        vision.remove([self.x_loc, self.y_loc])
+
+        return vision 
+
+    def checkDead(self):
+
+        if self.energy <= 0: 
+            self.die = True
+        
+    def checkIsHome(self):
+
+        if self.x_loc != self.x_loc_home or self.y_loc != self.y_loc_home:
+            self.die = True
+        else:
+            self.die = False

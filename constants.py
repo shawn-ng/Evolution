@@ -1,0 +1,18 @@
+# Constant that we can set through out the configuration
+
+# AGENT 
+AGENT_COLOUR = (255,255,102)
+AGENT_SIZE = 10 
+AGENT_SPEED = 15
+
+# MAP
+WIDTH = 500
+HEIGHT = 500 
+STEPSIZE = 10
+COLUMNS = WIDTH/STEPSIZE
+ROWS = HEIGHT/STEPSIZE
+
+# FOOD 
+FOOD_COLOUR = (0,0,255)
+
+# NEURAL NETWORK 

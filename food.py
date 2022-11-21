@@ -1,4 +1,5 @@
 import pygame 
+import constants as const
 
 class Food():
 
@@ -7,7 +8,7 @@ class Food():
         # identifier 
         self.Id = id
         self.size = 10
-        self.colour = (0,0,255)
+        self.colour = const.FOOD_COLOUR
 
         # location 
         self.x_loc = location[0]

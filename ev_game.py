@@ -17,10 +17,6 @@ Rules of the game
 6. Each day will last 60 seconds and if agent not back at the habitat the agent will die
 7. The goal of the game is to survive as many iteration of 60 seconds as possible 
 """
-
-pygame.init()
-
-
 class Game():
 
     def __init__(self, width, height, number_agent = 1 , number_food = 10):
@@ -47,13 +43,21 @@ class Game():
         pygame.display.update()
         pygame.display.set_caption("The Evolution Game")
         clock = pygame.time.Clock()
+        start_ticks = pygame.time.get_ticks()
 
         while not self.game_over:
 
+            seconds = round((pygame.time.get_ticks() - start_ticks)/1000)
+            print(seconds)
+            # check time on condition
+            if seconds%5 == 0:
+                # is agent home else dead 
+                self.agents_dict["agent-1"].checkIsHome()
+       
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.game_over = True
-            
+        
             dis.fill((0,0,0))
 
             # check food
@@ -61,9 +65,17 @@ class Game():
                 if self.foods_dict[key].eaten == False:
                     self.foods_dict[key].displayFood(display = dis)
 
-            self.agents_dict["agent-1"].move(width = self.dis_width, height = self.dis_height, foods_dict = self.foods_dict)
-            self.agents_dict["agent-1"].displayAgent(display = dis)   
+            # agent home 
+            for agent in self.agents_dict.keys():
+                self.agents_dict[agent].displayHome(display = dis)
 
+            # check agent whether izit alive
+            if self.agents_dict["agent-1"].die == False:
+                self.agents_dict["agent-1"].move(width = self.dis_width, height = self.dis_height, foods_dict = self.foods_dict)
+                self.agents_dict["agent-1"].displayAgent(display = dis)   
+            else:
+                self.game_over = True
+       
 
             pygame.display.update()
 
@@ -75,7 +87,7 @@ class Game():
     def populateAgent(self):
         
         for i in range(self.number_agent):
-            self.agents_dict[f"agent-{i + 1}"] = CA(id=i + 1, home_location=[10 + i * 10,10 + i * 10], init_location=[10 + i * 10,10 + i * 10])
+            self.agents_dict[f"agent-{i + 1}"] = CA(id=i + 1, home_location=[10 + (i + 1) * 10, (i) * 10], init_location=[10 + (i + 1) * 10, (i) * 10])
 
     def populateFood(self):
 
@@ -86,6 +98,7 @@ class Game():
             self.foods_dict[f"food-{i + 1}"] = F(id = i + 1, location = [foodx, foody]) 
 
 
+pygame.init()
 
 Game = Game(width=500, height=500, number_agent=1)
 
