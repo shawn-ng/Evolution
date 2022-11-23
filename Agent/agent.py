@@ -8,6 +8,7 @@ This is the agent class
 """
 import pygame
 import constants as const 
+from mind import DeepQNetwork as mind
 
 class CreateAgent():
 
@@ -16,6 +17,7 @@ class CreateAgent():
         # Identifier
         self.Id = id
         self.colour = const.AGENT_COLOUR
+        self.vision_colour = const.VISION_COLOUR
         self.size = const.AGENT_SIZE
         self.speed = const.AGENT_SPEED
         self.step = const.STEPSIZE
@@ -30,7 +32,8 @@ class CreateAgent():
         self.activity = {
             "eat": 1,
             "rest": 2, 
-            "move": 3
+            "move": 3,
+            "rest at home": 4
         }
 
         # agent energy level
@@ -40,15 +43,31 @@ class CreateAgent():
         self.food_energy = 5
         self.drainRate = 0.5
 
+        # vision 
+        self.vision = self.get_vision()
+
         # state 
         self.die = False 
         
         
-    def displayAgent(self, display):
+    def displayAgent(self, display, foods_list = [] , agents_home_list = [], vision_dis = False):
         pygame.draw.rect(display, self.colour, [self.x_loc, self.y_loc, self.size, self.size])
 
+        # displaying the vision 
+        if vision_dis == True:
+            vision = self.get_vision()
+
+            for i in vision:
+
+                if (i not in foods_list) and i != [self.x_loc_home, self.y_loc_home]:
+                    
+                    pygame.draw.rect(display, self.vision_colour, [i[0], i[1], self.size, self.size])
+   
+
+
     def displayHome(self,display):
-        pygame.draw.circle(display, self.colour,(self.x_loc_home + 5, self.y_loc_home + 5), radius=self.size/2)
+        pygame.draw.circle(display, (0,255,0),(self.x_loc_home + 5, self.y_loc_home + 5), radius=self.size/2)
+
 
     def eat(self):
 
@@ -58,49 +77,50 @@ class CreateAgent():
 
     def updateEnergy(self, activity):
 
-        if self.energy <= self.max_energy:
+
+        if self.energy <= self.max_energy and self.die == False:
             if activity == self.activity["eat"]:
                 self.energy += self.food_energy
             elif activity == self.activity["rest"]:
                 self.energy -= self.drainRate * 0.09
             elif activity == self.activity["move"]:
                 self.energy -= self.drainRate
+            elif activity == self.activity["rest at home"]:
+                self.energy += 10
 
         self.checkDead()
 
         if self.energy > self.max_energy:
             self.energy == self.max_energy
 
-    def move(self, width, height, foods_dict):
+    def move(self, width, height, foods_dict, action):
 
-        keys = pygame.key.get_pressed()
-
-        if keys[pygame.K_LEFT]:
+        # [0,1,2,3,4] = [rest,left, right, down, up]
+        
+        if action == 1:
             if self.x_loc >= self.step and self.x_loc <= width - self.step:
                 self.x_loc -= self.step 
                 self.updateEnergy(activity=3)
                 self.detectFood(foods_dict)
-        elif keys[pygame.K_RIGHT]:
+        elif action == 2:
             if self.x_loc >= 0 and self.x_loc <= width - self.step * 2:
                 self.x_loc+= self.step
                 self.updateEnergy(activity=3)
                 self.detectFood(foods_dict)
-        elif keys[pygame.K_DOWN]:
+        elif action == 3:
             if self.y_loc >= 0 and self.y_loc <= height - self.step * 2:
                 self.y_loc += self.step
                 self.updateEnergy(activity=3)
                 self.detectFood(foods_dict)
-        elif keys[pygame.K_UP]:
+        elif action == 4:
             if self.y_loc >= self.step and self.y_loc <= height:
                 self.y_loc -= self.step
                 self.updateEnergy(activity=3)
                 self.detectFood(foods_dict)
-        elif keys[pygame.K_1]:
-            print(f"energy: {self.energy} \tfood eaten: {self.food_eaten} \tposition: ({self.x_loc, self.y_loc}) \tstate: {self.die}")
-            print(self.get_vision())
-        else:
+        elif action == 0:
             self.updateEnergy(activity=2)
         
+        self.vision = self.get_vision()
         
     def detectFood(self, foods_dict):
 
@@ -134,7 +154,7 @@ class CreateAgent():
             del visionTemp[i[0]][i[1]]
 
         vision = [item for list in visionTemp for item in list]
-        vision.remove([self.x_loc, self.y_loc])
+        vision.remove([self.x_loc, self.y_loc]) # Stopping agent seeing it self.
 
         return vision 
 

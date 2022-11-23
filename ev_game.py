@@ -27,11 +27,14 @@ class Game():
         # Creating agent
         self.number_agent = number_agent
         self.agents_dict = {}
+        self.agents_reward = {}
+        self.agents_home_list = []
         self.populateAgent()
 
         # Creating food 
         self.food_count = 10
         self.foods_dict = {}
+        self.foods_list = []
         self.populateFood()
 
         # game state
@@ -39,6 +42,8 @@ class Game():
         self.fps = 10
         self.round = 0
 
+        
+    
     def startGame(self):
         dis = pygame.display.set_mode((self.dis_width,self.dis_height))
         pygame.display.update()
@@ -49,13 +54,18 @@ class Game():
         while not self.game_over:
 
             seconds = round((pygame.time.get_ticks() - start_ticks)/1000)
-            print(seconds)
+
             # check time on condition
-            if seconds%5 == 0:
-                # is agent home else dead 
-                self.agents_dict["agent-1"].checkIsHome()
-                
-       
+            if seconds%10 == 0 and seconds != 0: 
+                self.round += 1
+                # Resetting timer to 0 
+                start_ticks = pygame.time.get_ticks()
+
+                for agent in self.agents_dict.keys():
+                    self.agents_dict[agent].checkIsHome()
+                    self.agents_dict[agent].updateEnergy(activity=4)
+          
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.game_over = True
@@ -74,8 +84,8 @@ class Game():
             # check agent whether izit alive
             for agent in self.agents_dict.keys():
                 if self.agents_dict[agent].die == False:
-                    self.agents_dict[agent].move(width = self.dis_width, height = self.dis_height, foods_dict = self.foods_dict)
-                    self.agents_dict[agent].displayAgent(display = dis)   
+                    self.agents_dict[agent].move(width = self.dis_width, height = self.dis_height, foods_dict = self.foods_dict, action = 0)
+                    self.agents_dict[agent].displayAgent(display = dis ,foods_list = self.foods_list ,vision_dis = True)   
                 else:
                     self.game_over = True
             
@@ -90,6 +100,7 @@ class Game():
         
         for i in range(self.number_agent):
             self.agents_dict[f"agent-{i + 1}"] = CA(id=i + 1, home_location=[10 + (i + 1) * 10, (i) * 10], init_location=[10 + (i + 1) * 10, (i) * 10])
+            self.agents_home_list.append([10 + (i + 1) * 10, (i) * 10])
 
     def populateFood(self):
 
@@ -99,11 +110,14 @@ class Game():
             
             self.foods_dict[f"food-{i + 1}"] = F(id = i + 1, location = [foodx, foody]) 
 
+            # Putting into the list of food
+            self.foods_list.append([foodx, foody])
 
-pygame.init()
 
-Game = Game(width=500, height=500, number_agent=1)
+#pygame.init()
 
-Game.startGame()
+#Game = Game(width=500, height=500, number_agent=1)
 
-Game.quitGame()
+#Game.startGame()
+
+#Game.quitGame()
