@@ -80,7 +80,7 @@ class Game():
                     self.game_over = True
             
             pygame.display.update()
-            
+
             clock.tick(self.fps)
 
     def quitGame(self):
