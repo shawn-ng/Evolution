@@ -37,6 +37,7 @@ class Game():
         # game state
         self.game_over = False
         self.fps = 10
+        self.round = 0
 
     def startGame(self):
         dis = pygame.display.set_mode((self.dis_width,self.dis_height))
@@ -53,6 +54,7 @@ class Game():
             if seconds%5 == 0:
                 # is agent home else dead 
                 self.agents_dict["agent-1"].checkIsHome()
+                
        
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -70,15 +72,15 @@ class Game():
                 self.agents_dict[agent].displayHome(display = dis)
 
             # check agent whether izit alive
-            if self.agents_dict["agent-1"].die == False:
-                self.agents_dict["agent-1"].move(width = self.dis_width, height = self.dis_height, foods_dict = self.foods_dict)
-                self.agents_dict["agent-1"].displayAgent(display = dis)   
-            else:
-                self.game_over = True
-       
-
+            for agent in self.agents_dict.keys():
+                if self.agents_dict[agent].die == False:
+                    self.agents_dict[agent].move(width = self.dis_width, height = self.dis_height, foods_dict = self.foods_dict)
+                    self.agents_dict[agent].displayAgent(display = dis)   
+                else:
+                    self.game_over = True
+            
             pygame.display.update()
-
+            
             clock.tick(self.fps)
 
     def quitGame(self):
