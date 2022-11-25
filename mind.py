@@ -53,8 +53,9 @@ class AgentThink:
         self.mem_size = max_men_size
         self.batch_size = batch_size
         self.mem_cntr = 0
+        self.iter_cntr = 0
 
-        self.Q_eval = DeepQNetwork(self.lr, n_actions = n_actions, input_dims = input_dims, fc1_dims = 256, fc2_dims = 256)
+        self.Q_eval = DeepQNetwork(self.lr, n_actions = n_actions, input_dims = input_dims, fc1_dims = 250, fc2_dims = 250)
 
         self.state_memory = np.zeros((self.mem_size, *input_dims),
                                      dtype=np.float32)
@@ -74,22 +75,16 @@ class AgentThink:
 
         self.mem_cntr += 1
 
-    def choose_action(self, observation):
-        if np.random.random() > self.epsilon:
-            state = T.tensor([observation]).to(self.Q_eval.device)
-            actions = self.Q_eval.forward(state)
-            action = T.argmax(actions).item()
-        else:
-            action = np.random.choice(self.action_space)
-
-        return action
-
     def choose_actions(self, observation):
-
         if np.random.random() > self.epsilon:
             state = T.tensor([observation]).to(self.Q_eval.device)
+            state = state.to(T.float32)
             actions = self.Q_eval.forward(state)
+
             action = T.argmax(actions).item()
+
+            if action >= 250:
+                action = np.random.choice(self.action_space)
         else:
             action = np.random.choice(self.action_space)
 
@@ -104,8 +99,8 @@ class AgentThink:
 
         max_mem = min(self.mem_cntr, self.mem_size)
 
-        batch = np.random.choice(max_mem, self.batch_size, replce = False)
-        batch_index = np.arrange(self.batch_size, dtype = np.int32)
+        batch = np.random.choice(max_mem, self.batch_size, replace = False)
+        batch_index = np.arange(self.batch_size, dtype = np.int32)
 
         state_batch = T.tensor(self.state_memory[batch]).to(self.Q_eval.device)
         new_state_batch = T.tensor(
@@ -115,12 +110,11 @@ class AgentThink:
                 self.reward_memory[batch]).to(self.Q_eval.device)
         terminal_batch = T.tensor(
                 self.terminal_memory[batch]).to(self.Q_eval.device)
-
         q_eval = self.Q_eval.forward(state_batch)[batch_index, action_batch]
         q_next = self.Q_eval.forward(new_state_batch)
         q_next[terminal_batch] = 0.0
 
-        q_target = reward_batch + self.gamma*T.max(q_next, dim=1)[0]
+        q_target = self.gamma*T.max(q_next, dim=1)[0] + T.tensor(np.resize(reward_batch.detach().numpy(), (64,5)))
 
         loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
         loss.backward()
@@ -129,4 +123,3 @@ class AgentThink:
         self.iter_cntr += 1
         self.epsilon = self.epsilon - self.eps_dec \
             if self.epsilon > self.eps_min else self.eps_min
-

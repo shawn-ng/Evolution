@@ -47,13 +47,19 @@ class CreateAgent():
         self.vision = self.get_vision()
 
         # state 
+        self.survive_day = 0
         self.die = False 
+
+        # agent cause of death 
+        self.diefromenergy = False
+        self.diefromhome = False
         
         
     def displayAgent(self, display, foods_list = [] , agents_home_list = [], vision_dis = False):
         pygame.draw.rect(display, self.colour, [self.x_loc, self.y_loc, self.size, self.size])
 
         # displaying the vision 
+        """
         if vision_dis == True:
             vision = self.get_vision()
 
@@ -62,6 +68,7 @@ class CreateAgent():
                 if (i not in foods_list) and i != [self.x_loc_home, self.y_loc_home]:
                     
                     pygame.draw.rect(display, self.vision_colour, [i[0], i[1], self.size, self.size])
+        """
    
 
 
@@ -162,10 +169,12 @@ class CreateAgent():
 
         if self.energy <= 0: 
             self.die = True
+            self.diefromenergy = True
         
     def checkIsHome(self):
 
         if self.x_loc != self.x_loc_home or self.y_loc != self.y_loc_home:
             self.die = True
+            self.diefromhome = True
         else:
             self.die = False
